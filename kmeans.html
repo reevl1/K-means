@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WCSS</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
+</head>
+<body>
+  <h2>K-Means (WCSS)</h2>
+  <canvas id="chart" width="600" height="400"></canvas>
+
+  <script>
+    fetch('wcss.csv')
+      .then(response => response.text())
+      .then(data => {
+        const lines = data.trim().split('\n');
+        const labels = [], values = [];
+        let elbowK = null;
+
+        for (let line of lines) {
+          if (line.startsWith('#elbow')) {
+            elbowK = parseInt(line.split(',')[1]);
+            continue;
+          }
+          const [k, wcss] = line.split(',');
+          labels.push(+k);
+          values.push(+wcss);
+        }
+
+        new Chart(document.getElementById('chart'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'WCSS',
+              data: values,
+              borderColor: 'red',
+              fill: false,
+              tension: 0.1
+            }]
+          },
+          options: {
+            plugins: {
+              annotation: elbowK ? {
+                annotations: {
+                  elbowLine: {
+                    type: 'line',
+                    scaleID: 'x',
+                    value: elbowK,
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    label: {
+                      enabled: true,
+                      content: `Elbow at k=${elbowK}`,
+                      position: 'start'
+                    }
+                  }
+                }
+              } : {}
+            },
+            scales: {
+              x: {
+                title: { display: true, text: 'k (number of clusters)' }
+              },
+              y: {
+                title: { display: true, text: 'WCSS' }
+              }
+            }
+          }
+        });
+      });
+  </script>
+</body>
+</html>
